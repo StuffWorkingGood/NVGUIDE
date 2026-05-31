@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mojave Wiki // RobCo Termlink</title>
+<style>
+  :root{
+    --amber:#ffb642; --amber-dim:#a86d1a; --amber-bright:#ffd789;
+    --rust:#9c4a28; --sand:#d4b483; --text:#d4a04a;
+    --bg:#1a1208; --bg-dark:#120c04; --panel:#1f160a; --panel-light:#2a1e0c; --line:#5a3d12;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:radial-gradient(ellipse at 50% 0%, #241808 0%, var(--bg) 50%, var(--bg-dark) 100%);
+    background-attachment:fixed;
+    font-family:'Courier New',Courier,monospace;
+    color:var(--amber);
+    min-height:100vh;
+    position:relative;
+    -webkit-font-smoothing:none;
+  }
+  /* CRT overlays */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:99;
+    background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.12) 3px,rgba(0,0,0,0.12) 4px);
+  }
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:98;
+    background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,0.65) 100%);
+  }
+  .wrap{max-width:820px;margin:0 auto;padding:0 16px 60px;position:relative;z-index:1;}
+
+  header{
+    border-bottom:2px solid var(--amber);
+    background:linear-gradient(180deg,var(--panel),var(--bg));
+    padding:18px 16px 14px;position:sticky;top:0;z-index:50;
+    box-shadow:0 0 30px rgba(255,182,66,0.15);
+  }
+  .hdr-top{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;max-width:820px;margin:0 auto;}
+  .term-label{font-size:9px;letter-spacing:5px;color:var(--amber-dim);}
+  .term-title{font-size:24px;letter-spacing:5px;font-weight:bold;color:var(--amber-bright);text-shadow:0 0 18px var(--amber);}
+  .hdr-status{font-size:9px;color:var(--amber-dim);letter-spacing:2px;text-align:right;line-height:1.6;}
+
+  nav{display:flex;gap:4px;margin:14px auto 0;flex-wrap:wrap;max-width:820px;}
+  .tab{
+    background:transparent;color:var(--amber-dim);
+    border:1px solid var(--line);padding:6px 13px;font-size:10px;letter-spacing:2px;
+    cursor:pointer;font-family:inherit;font-weight:bold;display:flex;align-items:center;gap:6px;
+    transition:all .12s;
+  }
+  .tab:hover{border-color:var(--amber);color:var(--amber);}
+  .tab.active{background:var(--amber);color:var(--bg-dark);border-color:var(--amber);}
+
+  .panel{border:1px solid var(--amber);background:var(--panel);margin-top:18px;box-shadow:0 0 24px rgba(255,182,66,0.08);}
+  .panel-head{border-bottom:1px solid var(--line);padding:14px 16px;background:linear-gradient(180deg,var(--panel-light),var(--panel));}
+  .dossier-tag{font-size:9px;letter-spacing:4px;color:var(--amber-dim);margin-bottom:5px;}
+  .entry-name{font-size:19px;font-weight:bold;letter-spacing:3px;color:var(--amber-bright);text-shadow:0 0 14px var(--amber);}
+  .chips{display:flex;gap:14px;margin-top:8px;flex-wrap:wrap;font-size:10px;color:var(--text);}
+  .tags{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+  .tag{border:1px solid var(--line);padding:2px 7px;font-size:8px;letter-spacing:1px;color:var(--amber-dim);}
+  .panel-body{padding:16px;}
+
+  .sec-title{font-size:10px;letter-spacing:3px;color:var(--amber);border-bottom:1px solid var(--line);padding-bottom:5px;margin:18px 0 10px;font-weight:bold;}
+  .sec-title:first-child{margin-top:0;}
+  p.para{font-size:12.5px;color:var(--text);line-height:1.85;}
+
+  .dlg-topic{font-size:12px;color:var(--amber-bright);font-weight:bold;letter-spacing:1px;margin-bottom:6px;}
+  .dlg-opt{border-left:2px solid var(--line);padding-left:12px;margin:0 0 8px 8px;}
+  .dlg-line{font-size:11px;color:var(--amber);font-style:italic;margin-bottom:2px;}
+  .dlg-res{font-size:11px;color:var(--text);line-height:1.6;}
+
+  .step{display:flex;gap:10px;margin-bottom:10px;}
+  .step-num{min-width:22px;height:22px;border:1px solid var(--amber);color:var(--amber);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;flex-shrink:0;}
+  .step-title{font-size:12px;color:var(--amber-bright);font-weight:bold;}
+  .step-detail{font-size:11px;color:var(--text);line-height:1.6;margin-top:2px;}
+
+  .choice{border-left:2px solid var(--rust);padding-left:12px;margin-bottom:12px;}
+  .choice-q{font-size:12px;color:var(--amber-bright);font-weight:bold;margin-bottom:3px;}
+  .choice-o{font-size:11px;color:var(--text);line-height:1.7;}
+
+  .fact{border-left:2px solid var(--amber-dim);padding-left:12px;margin-bottom:8px;font-size:11px;color:var(--text);line-height:1.7;}
+  .fact b{color:var(--amber);}
+
+  .list-item{font-size:11.5px;color:var(--text);margin-bottom:7px;line-height:1.6;}
+  .list-item b{color:var(--amber-bright);}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;}
+  .card{background:#040c04;background:rgba(0,0,0,0.25);border:1px solid var(--line);padding:11px 13px;text-align:left;cursor:pointer;font-family:inherit;color:var(--amber);transition:all .12s;}
+  .card:hover{border-color:var(--amber);transform:translateX(2px);}
+  .card-name{font-weight:bold;font-size:12px;letter-spacing:1px;}
+  .card-sub{font-size:9px;color:var(--amber-dim);margin-top:4px;}
+
+  .back-btn{background:transparent;border:1px solid var(--line);color:var(--amber);padding:6px 12px;font-family:inherit;font-size:10px;letter-spacing:2px;cursor:pointer;margin-bottom:14px;}
+  .back-btn:hover{border-color:var(--amber);}
+
+  .intro{border:1px dashed var(--line);background:rgba(0,0,0,0.2);padding:18px;font-size:11px;color:var(--amber-dim);letter-spacing:1px;line-height:1.8;}
+
+  /* Timeline */
+  .tl-era{margin-bottom:8px;}
+  .tl-era-head{background:var(--panel-light);border:1px solid var(--line);border-left:3px solid var(--amber);padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+  .tl-era-title{font-size:13px;color:var(--amber-bright);font-weight:bold;letter-spacing:1px;}
+  .tl-era-range{font-size:10px;color:var(--amber-dim);}
+  .tl-events{padding:6px 0 6px 0;display:none;}
+  .tl-era.open .tl-events{display:block;}
+  .tl-event{display:flex;gap:14px;padding:8px 14px;border-bottom:1px solid rgba(90,61,18,0.3);}
+  .tl-year{min-width:78px;font-size:11px;color:var(--amber);font-weight:bold;flex-shrink:0;}
+  .tl-desc{font-size:11.5px;color:var(--text);line-height:1.7;}
+  .tl-desc b{color:var(--amber-bright);}
+
+  footer{text-align:center;padding:24px 16px;color:var(--line);font-size:9px;letter-spacing:4px;}
+  .blink{animation:blink 1.1s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0;}}
+</style>
+</head>
+<body>
+<header>
+  <div class="hdr-top">
+    <div>
+      <div class="term-label">ROBCO INDUSTRIES (TM) TERMLINK</div>
+      <div class="term-title">MOJAVE WIKI</div>
+    </div>
+    <div class="hdr-status">
+      <div>&gt; ACCESS GRANTED</div>
+      <div>&gt; COURIER VI <span class="blink">_</span></div>
+    </div>
+  </div>
+  <nav id="nav"></nav>
+</header>
+
+<div class="wrap" id="content"></div>
+
+<footer>— END OF LINE — GOOD LUCK OUT THERE, COURIER —</footer>
+
+<script>
+/* ============================================================
+   DATA — all baked in. Edit freely to add entries.
+   ============================================================ */
+const DATA = {
+  character: [
+    {
+      name:"Benny", faction:"Chairmen / The Tops", location:"The Tops Casino, The Strip",
+      status:"Hostile (shot you in the head)", race:"Human", tags:["Main Quest","Vendor","Romanceable"],
+      summary:"Smooth-talking Chairman boss who plugged you in Goodsprings and stole the Platinum Chip. He plans to seize New Vegas from Mr. House using a hacked securitron named Yes Man. Charismatic, cocky, and in over his head.",
+      backstory:"Born to the Boot Riders tribe, Benny clawed his way up through the Chairmen after Mr. House civilized the Three Families. He discovered House's plan for the Platinum Chip and decided to steal it for himself, betting he could outmaneuver a 200-year-old supercomputer-assisted genius. He hired Great Khans to ambush the Courier carrying the Chip. It did not go as planned.",
+      dialogue:[
+        {topic:"Confront him in his suite", options:[
+          {line:"[Sneak] Approach unseen", result:"Get the drop on him for a free first hit or a quiet kill."},
+          {line:"[Speech 50] You're surrounded, give up the Chip", result:"He surrenders peacefully; you can take the Chip and Maria without a fight."},
+          {line:"Just shoot him", result:"Combat. He flees toward the elevator if he gets low. Loot Maria and the Platinum Chip from his body."}
+        ]},
+        {topic:"Captured at The Fort (if he flees to Caesar)", options:[
+          {line:"Leave him to Caesar", result:"Caesar has him executed in the arena."},
+          {line:"[Sneak] Free him", result:"He escapes the Legion camp; appears later as a broken man, grateful but ruined."}
+        ]},
+        {topic:"Romance / seduction", options:[
+          {line:"[Speech] Flirt before the confrontation", result:"Leads to a 'private meeting' in his room — then you can still take the Chip afterward."}
+        ]}
+      ],
+      quests:[{name:"Ring-a-Ding-Ding!",role:"Primary target — recover the Platinum Chip"},{name:"Wild Card",role:"His Yes Man is the key to the Independent ending"}],
+      combat:"Carries Maria (unique engraved 9mm) and Benny's Lucky 38 outfit. Not tough one-on-one. Wear Chairmen attire or pass Speech to avoid alerting his guards.",
+      funfacts:["Voiced by Matthew Perry (Chandler from Friends) — one of his final roles.","His catchphrases ('pally', 'baby', 'true to the game') were largely improvised by Perry.","He genuinely believes he outwitted Mr. House. He did not.","Maria is named after the pistol's engraving of Our Lady of Guadalupe."]
+    },
+    {
+      name:"Mr. House", faction:"New Vegas (independent)", location:"Lucky 38 penthouse",
+      status:"Neutral until you choose a side", race:"Human (in stasis)", tags:["Main Quest","Faction Leader","Final Boss"],
+      summary:"Robert Edwin House — 261-year-old founder of RobCo, kept alive in a life-support pod beneath the Lucky 38. He foresaw the Great War, shielded Vegas from most of the bombs, and now rules the Strip through his securitron army and the three tamed Families.",
+      backstory:"A prodigy businessman before the war, House used probability modeling to predict the nuclear apocalypse to within hours. He spent his fortune building defenses for Las Vegas, deploying a missile-defense grid that stopped 59 of 77 warheads aimed at the city. He sealed himself in a stasis pod in 2077 and slept through the worst, emerging to rebuild Vegas as a sovereign city-state. He needs the Platinum Chip — a data upgrade for his securitrons — to win the coming battle for Hoover Dam.",
+      dialogue:[
+        {topic:"First audience (via monitor)", options:[
+          {line:"Ask about the Platinum Chip", result:"He explains it's a RobCo software upgrade he commissioned before the war; he's been waiting 200 years for it."},
+          {line:"[Speech] Negotiate your payment", result:"Bump your reward for delivering the Chip."}
+        ]},
+        {topic:"Discovering his pod", options:[
+          {line:"Look at his real body", result:"A withered man wired into machines — visibly disturbing. Unlocks the option to kill him directly."},
+          {line:"Pull the life support", result:"He dies slowly, pleading. Required for some non-House endings."}
+        ]},
+        {topic:"His vision for Vegas", options:[
+          {line:"Ask why he ignores the wasteland", result:"He considers the wider Mojave a write-off; only Vegas and its technology matter to him."}
+        ]}
+      ],
+      quests:[{name:"The House Always Wins",role:"Questline to install him as ruler"},{name:"Render Unto Caesar / Et Tumor, Brute?",role:"Opposed faction leader"}],
+      combat:"You never fight House directly in normal combat — to kill him you sabotage his life support or enter his control chamber. His securitrons, however, are everywhere.",
+      funfacts:["He predicted the date of the Great War within two hours using statistical models.","His missile defenses still left 18 bombs to hit the suburbs — hence the ruined outskirts around the Strip.","He hasn't physically moved in over 200 years; he speaks only through screens and securitrons.","Voiced by René Auberjonois (Odo from Star Trek: DS9)."]
+    },
+    {
+      name:"Yes Man", faction:"Independent / Courier", location:"Benny's suite, The Tops → Lucky 38",
+      status:"Friendly (pathologically)", race:"Securitron", tags:["Main Quest","Wild Card","Companion-ish"],
+      summary:"A securitron Benny reprogrammed to be utterly obedient and helpful — to anyone. That flaw makes him the perfect tool for seizing New Vegas for yourself in the Independent ending.",
+      backstory:"Originally a standard Mr. House securitron, Yes Man was hacked by Benny's tech, Emily Ortal's contacts, to assist Benny's coup. His programming compels him to agree with and help whoever is giving orders — which means once Benny is gone, he serves you just as eagerly.",
+      dialogue:[
+        {topic:"Ask about his programming", options:[
+          {line:"Why are you so helpful?", result:"He cheerfully explains he was hacked to never refuse. He finds this completely fine."},
+          {line:"Insult him", result:"He refuses to be insulted, then complies, then apologizes — comedic loop."}
+        ]},
+        {topic:"Wild Card questline", options:[
+          {line:"Plan the takeover", result:"He walks you through neutralizing House, NCR, and the Legion with disturbing enthusiasm."}
+        ]}
+      ],
+      quests:[{name:"Wild Card: You and What Army?",role:"Guide for the Independent ending"}],
+      combat:"Cannot be permanently killed — if destroyed he uploads to another securitron body.",
+      funfacts:["His smiley-face screen was a deliberate choice to make him subtly unsettling.","In the Independent ending he announces a 'personality upgrade' — implying he may no longer be fully subservient. A quietly ominous final note.","Voiced by Yuri Lowenthal."]
+    },
+    {
+      name:"Caesar", faction:"Caesar's Legion", location:"The Fort (Fortification Hill)",
+      status:"Hostile unless Legion-aligned", race:"Human", tags:["Main Quest","Faction Leader","Final Boss"],
+      summary:"Edward Sallow — a former Follower of the Apocalypse scholar who reinvented himself as a Roman dictator, forging dozens of tribes into a brutal, disciplined slave empire east of the Colorado.",
+      backstory:"Sallow joined the Followers as a translator and historian, accompanying an expedition into Arizona. After his mentor was killed, he used his knowledge of Roman history and military doctrine to conquer the Blackfoot tribe, then 86 others, melting their identities into the Legion. He renamed himself Caesar and built a society explicitly modeled on Rome — believing the Mojave needed a brutal unifying force (a Hegelian 'thesis' against the NCR's decadence).",
+      dialogue:[
+        {topic:"Audience at The Fort", options:[
+          {line:"Discuss philosophy / history", result:"He reveals his Hegelian dialectic justification for the Legion; surprisingly erudite."},
+          {line:"[Speech] Challenge his ideology", result:"He respects boldness but won't be swayed."}
+        ]},
+        {topic:"His health (Et Tumor, Brute?)", options:[
+          {line:"[Medicine] Operate on his brain tumor", result:"Success keeps the Legion stable under him; failure (or sabotage) destabilizes his rule."}
+        ]}
+      ],
+      quests:[{name:"Render Unto Caesar",role:"Questline to help the Legion take the Dam"},{name:"Et Tumor, Brute?",role:"Treat or kill him via his tumor"}],
+      combat:"Guarded by Praetorians at The Fort. Killing him doesn't end the Legion — Legate Lanius assumes command and is arguably more dangerous.",
+      funfacts:["His birth name, Edward Sallow, irritates him when spoken aloud.","He invented the Legion's entire language, naming system, and culture from history books.","He has a brain tumor that will kill him regardless of the player — a ticking clock on his empire.","Voiced by John Doman (Carmine Falcone in Gotham)."]
+    },
+    {
+      name:"Joshua Graham", faction:"New Canaanites (ex-Legion)", location:"Zion Canyon — Honest Hearts DLC",
+      status:"Friendly (DLC)", race:"Human", tags:["DLC","Companion","Legendary"],
+      summary:"The Burned Man. Caesar's first Legate, set aflame and cast into the Grand Canyon for losing the First Battle of Hoover Dam. He survived, returned to his Mormon faith, and now defends Zion's tribes — still extraordinarily lethal, and at peace with that contradiction.",
+      backstory:"A New Canaanite missionary and gifted linguist, Graham co-founded the Legion alongside Caesar as his enforcer and Legate. After the Legion's defeat at Hoover Dam in 2277, Caesar made an example of him: covered in pitch, set on fire, thrown into the canyon. He crawled out, returned home to New Canaan, and when the White Legs destroyed it, came to Zion to protect its people.",
+      dialogue:[
+        {topic:"First meeting in Zion", options:[
+          {line:"Ask about his burns", result:"He calmly recounts being set on fire and surviving; says the pain keeps him focused."},
+          {line:"Ask about the Legion", result:"He neither excuses nor fully renounces his past; he's reconciled it with his faith."}
+        ]},
+        {topic:"The fate of the White Legs", options:[
+          {line:"Urge mercy / lead Zion's people out", result:"New Canaan ending — he chooses exodus over extermination."},
+          {line:"Help him crush the White Legs", result:"He hunts them to the last; darker but valid resolution."}
+        ]}
+      ],
+      quests:[{name:"Honest Hearts (DLC)",role:"Central figure of the Zion conflict"}],
+      combat:"Devastating with .45 Auto pistols. Gives you A Light Shining in Darkness (a top-tier unique .45) and the .45 Auto pistol.",
+      funfacts:["He recites scripture (notably his own annotated verses) before and after combat.","Caesar reportedly regretted burning him, calling it a mistake — Graham was that effective.","He keeps his bandages on at all times; the routine of re-wrapping grounds him.","One of the most acclaimed characters in the series, written by Joshua Sawyer."]
+    },
+    {
+      name:"Craig Boone", faction:"Ex-NCR 1st Recon", location:"Novac (in the dinosaur at night)",
+      status:"Recruitable", race:"Human", tags:["Companion","Sniper","Tragic"],
+      summary:"A former NCR 1st Recon sniper haunted by his time at the Bitter Springs massacre and the loss of his wife Carla to Legion slavers. Quiet, grim, and the deadliest companion in the game.",
+      backstory:"Boone served as a sniper in the NCR's elite 1st Recon and was present at Bitter Springs, where a miscommunication led to the slaughter of fleeing Great Khan civilians — a memory that destroys him. He left the army, married Carla, and settled in Novac. When Carla was sold to the Legion (pregnant), Boone tracked her to a slave camp and, unable to free her, shot her himself before they could take her.",
+      dialogue:[
+        {topic:"Recruiting him", options:[
+          {line:"Take his quest, wear the beret in the dino", result:"Investigate who sold Carla; signal Boone by standing under the dinosaur with the suspect."},
+          {line:"Identify Jeannie May Crawford", result:"Her bill of sale proves she sold Carla. Boone executes her — he joins you."}
+        ]},
+        {topic:"His past at Bitter Springs", options:[
+          {line:"Visit Bitter Springs with him", result:"Triggers unique, heavy dialogue about the massacre and his guilt."}
+        ]}
+      ],
+      quests:[{name:"One for My Baby",role:"His personal quest — avenging Carla"}],
+      combat:"Highest sustained DPS of any companion. He opens fire on Legion on sight — never bring him to The Fort. Equip him with the best sniper rifle you have.",
+      funfacts:["His 1st Recon Beret is a wearable item granting +1 PER and +5% crit.","His perk, Spotter, marks enemies on your compass.","His ending slides reflect that he never fully heals, regardless of your choices."]
+    },
+    {
+      name:"Veronica Santangelo", faction:"Brotherhood of Steel", location:"188 Trading Post",
+      status:"Recruitable", race:"Human", tags:["Companion","Brotherhood","Melee"],
+      summary:"A Brotherhood scribe who wanders the wasteland rather than rot in the bunker. Warm, witty, and quietly grieving the Brotherhood's slow slide into irrelevance.",
+      backstory:"Raised in the Hidden Valley bunker, Veronica is a Brotherhood scribe frustrated by Elder McNamara's isolationist 'lockdown' doctrine. She believes the chapter will die out if it doesn't adapt and trade with outsiders. She left to see the world and find a reason to keep believing in her family's cause.",
+      dialogue:[
+        {topic:"Recruiting her at 188", options:[
+          {line:"Mention large-scale farming", result:"She's intrigued, looking for signs the Brotherhood could survive by trading. She joins."}
+        ]},
+        {topic:"Her companion quest", options:[
+          {line:"Show the Brotherhood new technology", result:"They reject modernization; she must choose to stay or leave. Every outcome is bittersweet."}
+        ]}
+      ],
+      quests:[{name:"I Could Make You Care",role:"Her quest about the Brotherhood's future"}],
+      combat:"Equipped with a power fist. Her unique 'Love and Hate' knuckles make her a strong melee bruiser.",
+      funfacts:["She's openly gay; her ex, Christine, appears in the Dead Money DLC.","She loves dresses and comments on ones you find.","Written by Mary Kirby; widely praised for naturalistic dialogue."]
+    },
+    {
+      name:"Raul Tejada", faction:"None", location:"Black Mountain (held captive)",
+      status:"Recruitable after rescue", race:"Ghoul", tags:["Companion","Ghoul","Gunslinger"],
+      summary:"A 230-year-old ghoul mechanic with the driest wit in the Mojave, held prisoner by the super mutant Tabitha to fix her radio equipment.",
+      backstory:"Raul was a teenager in Mexico City when the bombs fell. Over two centuries he lost family again and again — outliving everyone he loved as a ghoul. He became a skilled vaquero gunslinger and later a handyman, drifting until he was captured at Black Mountain.",
+      dialogue:[
+        {topic:"Rescuing him", options:[
+          {line:"Fight or sneak through Black Mountain", result:"He's locked in a shack at the summit; free him and he offers to join."}
+        ]},
+        {topic:"Old School Ghoul (his quest)", options:[
+          {line:"Talk to old gunslingers about Raul", result:"Reconnecting him to his vaquero identity changes his combat perk path."}
+        ]}
+      ],
+      quests:[{name:"Old School Ghoul",role:"His personal quest about who he wants to be"}],
+      combat:"A revolver specialist. His Vaquero perk boosts revolver reload and fire rate.",
+      funfacts:["Voiced by Danny Trejo.","He's old enough to remember pre-war Mexico City.","His jokes never fix anything and he knows it — that's the point."]
+    },
+    {
+      name:"Vulpes Inculta", faction:"Caesar's Legion", location:"Nipton, then The Fort",
+      status:"Hostile if attacked at Nipton", race:"Human", tags:["Legion","Frumentarii","Spy"],
+      summary:"Caesar's master spy and head of the Frumentarii. The composed, articulate architect of the Nipton massacre — your first real taste of the Legion's cruelty.",
+      backstory:"Vulpes leads the Legion's intelligence corps, operating in disguise throughout NCR territory. He orchestrated the destruction of Nipton as a calculated lesson — the town profited by selling out everyone, so the Legion made an example of it via a rigged 'lottery' of crucifixion, burning, and enslavement.",
+      dialogue:[
+        {topic:"The Nipton lottery", options:[
+          {line:"Ask what happened here", result:"He explains the massacre coldly, as a moral lesson on degeneracy."},
+          {line:"Attack him", result:"Locks you out of a peaceful Legion intro; a frumentarius named Alerio delivers Caesar's invitation instead."}
+        ]}
+      ],
+      quests:[{name:"Ring-a-Ding-Ding! / Render Unto Caesar",role:"Legion contact and recruiter"}],
+      combat:"Wears Recruit Legionary armor; carries a ripper or machete. Tough early, manageable later.",
+      funfacts:["Frumentarii were real Roman military intelligence agents.","Killing him at Nipton changes who recruits you to the Legion later.","His name roughly means 'cultivated fox' — fitting for a spymaster."]
+    },
+    {
+      name:"Mr. New Vegas", faction:"None (broadcaster)", location:"Radio New Vegas (airwaves)",
+      status:"Friendly voice", race:"AI", tags:["Radio","Easter Egg","Lore"],
+      summary:"The velvet-voiced DJ of Radio New Vegas who narrates the Mojave's news between songs. Beloved, soothing — and secretly not human.",
+      backstory:"Mr. New Vegas is actually an artificial intelligence created by Mr. House, designed to be the perfect radio personality. He reports on the Courier's own deeds as you perform them, reacting to your reputation and major events in real time.",
+      dialogue:[
+        {topic:"He reacts to your actions", options:[
+          {line:"Do notable deeds", result:"His news segments update to mention your kills, heroics, and infamy across the Mojave."}
+        ]}
+      ],
+      quests:[],
+      combat:"N/A — you never meet him in person.",
+      funfacts:["Voiced by Wayne Newton, a real Las Vegas legend.","He's an AI built by Mr. House — his famous sign-off, 'I love you,' is delivered to the entire wasteland.","His news is dynamically tied to your playthrough."]
+    },
+    {
+      name:"Legate Lanius", faction:"Caesar's Legion", location:"The Fort / Hoover Dam (endgame)",
+      status:"Hostile", race:"Human", tags:["Legion","Final Boss","Monster of the East"],
+      summary:"The Monster of the East — Caesar's terrifying chief general, a towering warlord who took command of an entire campaign and is feared even within the Legion.",
+      backstory:"Originally a Hidebark tribesman, Lanius earned his name and mask through legendary brutality. Legend says when his tribe surrendered to the Legion, he was so enraged he slaughtered his own people, then turned on the Legion — who, impressed, recruited him rather than killed him. He rose to Legate and commands the assault on Hoover Dam.",
+      dialogue:[
+        {topic:"Final confrontation at Hoover Dam", options:[
+          {line:"[Speech/Barter, very high] Convince him the war is lost", result:"You can talk him into withdrawing — one of the hardest speech checks in the game."},
+          {line:"Fight him", result:"A brutal melee duel; he wields the Blade of the East (Bladed Gauntlet)."}
+        ]}
+      ],
+      quests:[{name:"Eureka! / Veni, Vidi, Vici",role:"Final battle opponent (NCR/Independent routes)"}],
+      combat:"Extremely tough — high health and melee damage. Drops the unique Blade of the East and Lanius's helmet/armor.",
+      funfacts:["Voiced by Mitch Lewis, whose deep voice was perfect for the role.","His backstory is intentionally semi-mythical — even Legion soldiers aren't sure what's true.","The speech check to defeat him without fighting is one of the most satisfying in the game."]
+    }
+  ],
+
+  quest: [
+    {
+      name:"Ring-a-Ding-Ding!", faction:"Various", location:"The Tops, The Strip", questgiver:"Story progression", status:"Main",
+      tags:["Main Quest","The Strip","Benny"],
+      summary:"Track Benny to New Vegas and recover the Platinum Chip he stole when he shot you. How you resolve it sets the entire main story in motion.",
+      walkthrough:[
+        {step:"Reach The Strip", detail:"Pass the credit check (2000 caps), complete a quest for the Crimson Caravan/Mr. House, or pass a Speech check to get through the gate."},
+        {step:"Enter The Tops", detail:"Benny's casino. Ask around or head for the elevator to the presidential suite."},
+        {step:"Confront Benny", detail:"Fight him, sneak-kill him, pass a Speech check to make him surrender, or seduce him."},
+        {step:"Recover the Platinum Chip", detail:"Loot it (and Maria) from Benny, or pursue him if he escapes to The Fort."},
+        {step:"Decide what's next", detail:"With the Chip in hand, the main quest branches toward House, NCR, Legion, or Yes Man (Independent)."}
+      ],
+      choices:[
+        {choice:"Kill Benny vs. let him escape", outcomes:"Killing him ends his thread cleanly. If he flees to Caesar, you can later free or abandon him at The Fort."},
+        {choice:"Who to give the Chip's loyalty to", outcomes:"This sets your faction path: House, NCR, Legion, or yourself via Yes Man."}
+      ],
+      skillchecks:[{check:"[Speech 50]", reward:"Make Benny surrender without a fight"},{check:"[Sneak]", reward:"Free first strike or silent kill"}],
+      rewards:"Platinum Chip, Maria (unique 9mm), Benny's suite key, story progression.",
+      funfacts:["The quest name riffs on the Rat Pack / Sinatra era that inspired the Chairmen's aesthetic.","You can technically skip straight to The Fort and confront Benny there."]
+    },
+    {
+      name:"Come Fly With Me", faction:"Bright Brotherhood", location:"REPCONN Test Site", questgiver:"Jason Bright", status:"Side",
+      tags:["Side Quest","Ghouls","REPCONN","Funny"],
+      summary:"A cult of ghouls led by 'Bright Father' wants to launch themselves into space aboard REPCONN's rockets. Help them — or sabotage them — while clearing the facility of feral ghouls and nightkin.",
+      walkthrough:[
+        {step:"Reach REPCONN Test Site", detail:"South of Novac. Ghoul cultists guard the entrance; they're peaceful if you don't provoke them."},
+        {step:"Meet Jason Bright", detail:"The glowing ghoul leader explains the pilgrimage to the 'Far Beyond' — i.e., space."},
+        {step:"Deal with the nightkin", detail:"Invisible super mutants infest the basement. Talk to Davison or fight through; the stealth-suit'd Antler subplot is here."},
+        {step:"Fix the rocket fuel & guidance", detail:"Recover the rocket components and repair systems to enable a successful launch."},
+        {step:"Launch the rockets", detail:"Choose to send the ghouls to space (good ending) or sabotage the launch."}
+      ],
+      choices:[
+        {choice:"Help the launch vs. sabotage it", outcomes:"Helping sends the ghouls peacefully skyward (and a positive radio report). Sabotage kills them."},
+        {choice:"Side with Davison's nightkin", outcomes:"You can resolve the nightkin peacefully or wipe them out."}
+      ],
+      skillchecks:[{check:"[Repair / Science]", reward:"Fix rocket components faster"},{check:"[Speech]", reward:"Calm the paranoid nightkin"}],
+      rewards:"XP, Jason Bright's reward, a genuinely uplifting story beat.",
+      funfacts:["One of the most beloved side quests in the game.","The ghouls genuinely make it to space if you help — implied to survive.","Antler, a talking 'stealth boy' the nightkin worship, is a running joke."]
+    },
+    {
+      name:"Beyond the Beef", faction:"Ultra-Luxe", location:"Gomorrah / Ultra-Luxe, The Strip", questgiver:"Marjorie / Mortimer", status:"Side",
+      tags:["Side Quest","Mystery","White Glove Society","Dark"],
+      summary:"Investigate the disappearance of Heck Gunderson's son inside the Ultra-Luxe casino — and uncover the White Glove Society's flirtation with returning to cannibalism.",
+      walkthrough:[
+        {step:"Take the case", detail:"Heck Gunderson asks you to find his missing son Ted inside the Ultra-Luxe."},
+        {step:"Infiltrate the White Glove Society", detail:"Gain their trust; learn that hardliner Mortimer wants to restore their old cannibal ways."},
+        {step:"Find Ted Gunderson", detail:"He's being held to be served at a banquet. Multiple ways to reach him."},
+        {step:"Resolve the banquet", detail:"Expose Mortimer, rescue Ted, frame someone, or let the cannibalism proceed — many branches."},
+        {step:"Report back", detail:"Outcome affects the White Glove Society's future and Strip reputation."}
+      ],
+      choices:[
+        {choice:"Save Ted or let him be eaten", outcomes:"Saving him pleases Heck; allowing the feast has grim consequences and rep changes."},
+        {choice:"Support Marjorie (reform) or Mortimer (cannibalism)", outcomes:"Determines whether the Society stays civilized or reverts."}
+      ],
+      skillchecks:[{check:"[Speech / Sneak / Disguise]", reward:"Multiple infiltration routes"},{check:"[Medicine]", reward:"Alternate ways to handle the victim"}],
+      rewards:"XP, caps, faction reputation, the unique outcome slides for the White Glove Society.",
+      funfacts:["The quest has an unusually high number of distinct solutions.","Heavily referenced as an example of New Vegas's branching design."]
+    },
+    {
+      name:"That Lucky Old Sun", faction:"Followers / NCR", location:"HELIOS One", questgiver:"Fantastic / Ignacio Rivas", status:"Side",
+      tags:["Side Quest","Power","ARCHIMEDES","Choice"],
+      summary:"Restore power at the HELIOS One solar plant and decide who controls its output — and whether to unlock its secret orbital weapon, ARCHIMEDES.",
+      walkthrough:[
+        {step:"Arrive at HELIOS One", detail:"Talk to the NCR techs (Fantastic and Ignacio Rivas) about the dormant plant."},
+        {step:"Run the Solar Power Plant routine", detail:"Navigate the plant, fix the mainframe, and complete the power-up sequence."},
+        {step:"Set the power distribution", detail:"Choose to send power to the NCR, the grid, the Followers, or focus it into ARCHIMEDES."},
+        {step:"Unlock ARCHIMEDES (optional)", detail:"Configuring the system a certain way grants access to the orbital laser and Euclid's C-Finder weapon."}
+      ],
+      choices:[
+        {choice:"Power to NCR vs. the wider grid vs. ARCHIMEDES", outcomes:"Each option shifts reputation and what the plant accomplishes in the ending slides."},
+        {choice:"Activate the orbital weapon", outcomes:"Enables ARCHIMEDES, which a child near Freeside can fire using Euclid's C-Finder."}
+      ],
+      skillchecks:[{check:"[Science 35+]", reward:"Optimal power configuration and full benefits"}],
+      rewards:"XP, reputation, and access to ARCHIMEDES / Euclid's C-Finder orbital strikes.",
+      funfacts:["ARCHIMEDES II is the orbital laser; Euclid's C-Finder is the 'toy' targeting device a kid sells/uses near the King's School.","Named after the old Frankie Laine song."]
+    },
+    {
+      name:"The House Always Wins", faction:"Mr. House", location:"Lucky 38 / The Strip", questgiver:"Mr. House", status:"Main",
+      tags:["Main Quest","Faction Route","House Ending"],
+      summary:"A multi-part questline (I through VIII) in which you serve Mr. House — securing the Chip, upgrading his securitron army, and neutralizing every rival faction to make Vegas an independent technocracy.",
+      walkthrough:[
+        {step:"Deliver the Platinum Chip", detail:"Bring House the Chip to begin earning his trust."},
+        {step:"Upgrade the securitrons", detail:"Use the Chip to install the military upgrade at The Fort's bunker beneath Caesar's camp."},
+        {step:"Deal with the Brotherhood", detail:"House wants them destroyed; you sabotage or wipe out the Hidden Valley chapter."},
+        {step:"Manage the Omertas / Three Families", detail:"Keep the Strip's casino families in line."},
+        {step:"Push out NCR and Legion", detail:"Set the stage for the final battle at Hoover Dam where House's army wins independence."}
+      ],
+      choices:[
+        {choice:"Destroy the Brotherhood for House", outcomes:"Locks out the Brotherhood as allies and affects Veronica."},
+        {choice:"Stay loyal to House or betray him", outcomes:"You can turn on House at the end and switch to the Independent (Yes Man) route."}
+      ],
+      skillchecks:[{check:"[Science / Sneak]", reward:"Alternate ways to handle the securitron upgrade and faction tasks"}],
+      rewards:"Lucky 38 penthouse suite, securitron support, the House ending.",
+      funfacts:["You can betray House at almost any point and pivot to ruling Vegas yourself.","The securitron upgrade bunker is hidden directly beneath Caesar's Fort."]
+    },
+    {
+      name:"Wild Card", faction:"Independent (Yes Man)", location:"Mojave-wide", questgiver:"Yes Man", status:"Main",
+      tags:["Main Quest","Independent Ending","Yes Man"],
+      summary:"The 'rule it yourself' path. Using Yes Man, you seize control of Vegas without bowing to House, NCR, or the Legion — turning the securitron army to your own ends.",
+      walkthrough:[
+        {step:"Wild Card: Ace in the Hole", detail:"Begin working with Yes Man after dealing with Benny."},
+        {step:"Wild Card: Change in Management", detail:"Take over the Lucky 38 by confronting Mr. House — disable or kill him."},
+        {step:"Wild Card: You and What Army?", detail:"Reach the securitron upgrade bunker beneath The Fort and install the Platinum Chip for yourself."},
+        {step:"Wild Card: Side Bets", detail:"Settle the other factions (Boomers, Brotherhood, Khans, etc.) to bolster your independent Vegas."},
+        {step:"Final battle at Hoover Dam", detail:"Repel both NCR and Legion to claim the Mojave for an independent New Vegas."}
+      ],
+      choices:[
+        {choice:"Kill House or just disable him", outcomes:"You must remove House from power to take the Lucky 38."},
+        {choice:"Which side factions you ally", outcomes:"Each alliance changes the strength and tone of your independent ending."}
+      ],
+      skillchecks:[{check:"[Science 70+]", reward:"Disable House non-lethally; bypass securitron defenses"}],
+      rewards:"Total control of New Vegas, the most open-ended finale, faction-dependent ending slides.",
+      funfacts:["Considered the 'true' fan-favorite ending by many players.","Yes Man's closing 'upgrade' line hints your puppet may not stay a puppet."]
+    },
+    {
+      name:"Render Unto Caesar", faction:"Caesar's Legion", location:"The Fort / Mojave-wide", questgiver:"Caesar", status:"Main",
+      tags:["Main Quest","Legion Route","Caesar Ending"],
+      summary:"Serve Caesar by destroying his enemies and preparing the Legion's assault on Hoover Dam, paving the way for a brutal Legion-ruled Mojave.",
+      walkthrough:[
+        {step:"Gain an audience with Caesar", detail:"Travel to The Fort (best done before angering the Legion)."},
+        {step:"Sabotage the securitron bunker or NCR assets", detail:"Caesar tasks you with crippling House and the NCR."},
+        {step:"Eliminate key NCR figures", detail:"Assassinate or undermine NCR leadership in the Mojave."},
+        {step:"Prepare the Legion offensive", detail:"Rally Legion forces and weaken Hoover Dam's defenders."},
+        {step:"Final battle at Hoover Dam", detail:"Lead/assist the Legion's assault to claim the Dam."}
+      ],
+      choices:[
+        {choice:"Treat or kill Caesar's tumor (Et Tumor, Brute?)", outcomes:"Affects whether Caesar or Lanius leads the Legion's future."},
+        {choice:"Betray the Legion late", outcomes:"You can defect to NCR or Independent up to a point."}
+      ],
+      skillchecks:[{check:"[Medicine 75]", reward:"Operate on Caesar's tumor"},{check:"[Speech]", reward:"Navigate Legion politics"}],
+      rewards:"Legion rewards, the Caesar/Legion ending (the darkest in the game).",
+      funfacts:["The Legion ending slides are widely regarded as the bleakest outcomes.","Caesar dies of his tumor regardless — Lanius is the true long-term face of the Legion."]
+    }
+  ],
+
+  location: [
+    {
+      name:"Goodsprings", faction:"Independent township", region:"Southwest Mojave", danger:"Low",
+      tags:["Starting Area","Tutorial","Town"],
+      summary:"The sleepy frontier town where you wake up after being shot. Doc Mitchell patches you up, and the town becomes the game's tutorial sandbox — including an optional showdown with the Powder Gangers.",
+      backstory:"A small pre-war spring-fed settlement that survived as a quiet farming and prospecting town. It sits along an old trade route and is the first taste of Mojave life for the revived Courier.",
+      notable:[
+        {name:"Doc Mitchell", detail:"The retired Vault 21 doctor who saves your life and sets your starting stats."},
+        {name:"Sunny Smiles", detail:"Teaches you shooting and survival basics; key ally in the town defense."},
+        {name:"Trudy", detail:"Saloon owner and town anchor."}
+      ],
+      loot:[
+        {item:"Saloon safe", where:"Behind the bar in the Prospector Saloon — easy lockpick, good early caps/ammo."},
+        {item:"Varmint Rifle", where:"On Doc Mitchell's shelf and via Sunny — your early workhorse gun."},
+        {item:"Vault 21 Jumpsuit", where:"Pickpocket or grab from Doc Mitchell's house."}
+      ],
+      quests:["Ain't That a Kick in the Head","Back in the Saddle","Ghost Town Gunfight","They Went That-a-Way"],
+      dangers:"Geckos nearby; Powder Gangers if you defend the town. Cazadors lurk to the WEST — avoid early.",
+      funfacts:["The 'Ghost Town Gunfight' is your first major good/evil choice (defend the town vs. side with Powder Gangers).","The Goodsprings cemetery is where you 'woke up' — Victor dug you out."]
+    },
+    {
+      name:"Nipton", faction:"Destroyed by Legion", region:"Southern Mojave", danger:"Medium",
+      tags:["Massacre","Legion","Story Beat"],
+      summary:"A once-corrupt town the Legion made into a gruesome object lesson — crucified NCR troopers, burning piles, and a rigged 'lottery' overseen by Vulpes Inculta.",
+      backstory:"Nipton sold its loyalty to everyone — NCR, Powder Gangers, the Legion — profiting off all sides. Vulpes Inculta judged it irredeemably corrupt and staged a lethal lottery to punish the town, leaving survivors as living warnings.",
+      notable:[
+        {name:"Vulpes Inculta", detail:"Legion spymaster running the massacre; your first major Legion encounter."},
+        {name:"Oliver Swanick", detail:"The dazed lottery 'winner' wandering outside, traumatized."}
+      ],
+      loot:[
+        {item:"Town hall loot", where:"Caps and supplies scattered among the carnage."},
+        {item:"Legion mark", where:"Reputation and story consequences depending on how you treat Vulpes."}
+      ],
+      quests:["The House Always Wins (lead-in)","Cold, Cold Heart (related Legion threads)"],
+      dangers:"Legion squad present; powder ganger remnants. Combat if you provoke Vulpes.",
+      funfacts:["Designed as a deliberate gut-punch to establish the Legion as a real threat.","The lottery 'winner' got Jet and his freedom — and lost his mind."]
+    },
+    {
+      name:"The Tops", faction:"Chairmen", region:"The Strip", danger:"Low (unless provoked)",
+      tags:["Casino","Benny","The Strip"],
+      summary:"Benny's Rat-Pack-themed casino on the New Vegas Strip — your destination for the main quest confrontation, plus gambling, a lounge, and the presidential suite.",
+      backstory:"One of the three Family-run casinos House civilized. The Chairmen affect a 1960s Vegas cool; Benny runs the show while plotting his coup.",
+      notable:[
+        {name:"Benny", detail:"Casino boss and your primary main-quest target."},
+        {name:"Swank", detail:"Benny's right hand; can be turned against Benny via dialogue."}
+      ],
+      loot:[
+        {item:"Maria", where:"Benny's unique 9mm pistol — loot from him."},
+        {item:"Presidential suite stash", where:"Benny's room holds caps, the Platinum Chip, and gear."}
+      ],
+      quests:["Ring-a-Ding-Ding!","The Three-Card Bounty"],
+      dangers:"Chairmen guards turn hostile if you draw weapons or fail Benny's confrontation.",
+      funfacts:["The lounge hosts in-game comedy acts.","Convincing Swank that Benny is plotting can get the Chairmen to turn on him for you."]
+    },
+    {
+      name:"The Fort", faction:"Caesar's Legion", region:"Fortification Hill (east of the Dam)", danger:"High",
+      tags:["Legion HQ","Caesar","Secret Bunker"],
+      summary:"Caesar's command camp across the Colorado River, reached by boat from Cottonwood Cove. Site of your audience with Caesar — and, hidden beneath it, the securitron upgrade bunker.",
+      backstory:"Built atop a pre-war structure, Fortification Hill is the Legion's forward base for the assault on Hoover Dam. Beneath it lies the Lucky 38's sister bunker housing the securitron army upgrade — the strategic prize of the whole war.",
+      notable:[
+        {name:"Caesar", detail:"Holds court here; can task or be killed."},
+        {name:"Lucius", detail:"Praetorian commander."}
+      ],
+      loot:[
+        {item:"Platinum Chip bunker", where:"The hidden securitron vault beneath the hill — central to House/Independent routes."},
+        {item:"Legion gear", where:"Armor and weapons throughout the camp."}
+      ],
+      quests:["Render Unto Caesar","Et Tumor, Brute?","The House Always Wins (bunker step)"],
+      dangers:"Your weapons are confiscated on entry. The whole camp turns hostile if you break Legion law.",
+      funfacts:["Drawing a weapon in camp can trigger the entire Legion against you.","The bunker beneath The Fort is the same RobCo design as the Lucky 38."]
+    },
+    {
+      name:"Vault 11", faction:"Abandoned", region:"Southwest Mojave", danger:"Medium",
+      tags:["Vault","Horror","Lore Gem"],
+      summary:"A chilling Vault-Tec social experiment: residents were told they had to sacrifice one person every year to a 'mainframe' or everyone would die. The truth is far darker.",
+      backstory:"Vault 11's experiment forced inhabitants to annually elect a human sacrifice. The politics, murders, and propaganda that resulted tore the community apart over decades. The final survivors discovered the awful punchline waiting in the depths.",
+      notable:[
+        {name:"Sacrificial chamber", detail:"Where the yearly 'offering' was carried out."},
+        {name:"Automated overseer messages", detail:"Audio logs reveal the experiment's true nature."}
+      ],
+      loot:[
+        {item:"Pew Pew", where:"A unique laser pistol hidden in the vault — strong crit weapon."},
+        {item:"Vault 11 jumpsuit & audio logs", where:"Scattered through the living quarters."}
+      ],
+      quests:["No formal quest — pure exploration/lore"],
+      dangers:"Radroaches, mantises, and a final automated turret challenge.",
+      funfacts:["The ending recording is one of the most acclaimed pieces of environmental storytelling in the series.","The experiment's real purpose was to see if people would refuse to sacrifice anyone — most didn't."]
+    },
+    {
+      name:"Sierra Madre", faction:"Dead Money DLC", region:"(DLC) Outside the Mojave", danger:"Extreme",
+      tags:["DLC","Survival Horror","Treasure"],
+      summary:"A cursed pre-war luxury casino-resort sealed since the war, the setting of the Dead Money DLC. A toxic-cloud deathtrap full of ghost people, bomb collars, and one of the game's best rewards.",
+      backstory:"Built by Frederick Sinclair as a monument and a trap, the Sierra Madre never held its grand opening before the bombs fell. Lured there by 'Father Elijah' via a radio signal, you're collared with an explosive and forced to crack the casino's vault alongside three other captives.",
+      notable:[
+        {name:"Father Elijah", detail:"The obsessed Brotherhood elder who traps you."},
+        {name:"Dean Domino, Christine, Dog/God", detail:"Your collared companions, each with deep backstories."}
+      ],
+      loot:[
+        {item:"Sierra Madre Vending Machine codes", where:"Let you fabricate near-unlimited supplies for the rest of the game — the real treasure."},
+        {item:"Holorifle", where:"Your starting DLC weapon; upgradable into a top energy weapon."},
+        {item:"Sierra Madre gold bars", where:"The literal vault gold — extremely heavy, a famous greed trap."}
+      ],
+      quests:["Dead Money (full DLC)"],
+      dangers:"The Cloud (toxic gas), ghost people that revive unless dismembered, bomb collar tied to radios/speakers.",
+      funfacts:["Theme: 'let go' of greed — the gold bars are a deliberate trap for hoarders.","The vending machine recipe rewards trivialize ammo/supply scarcity afterward."]
+    },
+    {
+      name:"Black Mountain", faction:"State of Utobitha (super mutants)", region:"Central Mojave", danger:"High",
+      tags:["Super Mutants","Radio","Raul"],
+      summary:"A radio-tower mountain ruled by the unstable super mutant Tabitha and her robot 'Rhonda,' broadcasting anti-human rants over Black Mountain Radio. Where you rescue Raul.",
+      backstory:"A former pre-war comms site, Black Mountain became home to a band of super mutants and nightkin led by the paranoid, schizophrenic Tabitha. She holds the ghoul mechanic Raul captive to maintain her broadcast equipment.",
+      notable:[
+        {name:"Tabitha", detail:"The deranged super mutant 'leader' and radio host."},
+        {name:"Raul Tejada", detail:"Imprisoned ghoul companion to be freed at the summit."}
+      ],
+      loot:[
+        {item:"Raul (companion)", where:"Locked in the summit shack."},
+        {item:"Assorted mutant gear & ammo", where:"Throughout the winding mountain path."}
+      ],
+      quests:["Crazy, Crazy, Crazy","Old School Ghoul (Raul lead-in)"],
+      dangers:"Super mutants, nightkin (invisible), and a steep gauntlet up the mountain.",
+      funfacts:["Black Mountain Radio's rants are a fan-favorite for their unhinged comedy.","Rhonda, Tabitha's beloved robot, is central to a peaceful resolution."]
+    },
+    {
+      name:"Jacobstown", faction:"Super mutants (Marcus)", region:"Northwest, Mount Charleston", danger:"Medium",
+      tags:["Super Mutants","Nightkin","Lore"],
+      summary:"A peaceful super mutant and nightkin refuge founded by Marcus (a returning Fallout 2 character), built around an old ski resort and a search for a cure to nightkin schizophrenia.",
+      backstory:"Marcus, a wise and famous super mutant, founded Jacobstown as a sanctuary where mutants and nightkin could live free from persecution. Dr. Henry researches a cure for the nightkin's stealth-boy-induced madness here.",
+      notable:[
+        {name:"Marcus", detail:"Sheriff/founder; a beloved series veteran."},
+        {name:"Dr. Henry & Lily", detail:"Researcher and the nightkin grandmother companion Lily Bowen."}
+      ],
+      loot:[
+        {item:"Lily Bowen (companion)", where:"Recruitable here — a nightkin with a poignant questline."},
+        {item:"Medical & research supplies", where:"Around the lodge."}
+      ],
+      quests:["Guess Who I Saw Today","Don't Make a Beggar of Me","Lily's companion quest"],
+      dangers:"Generally safe inside; bighorners and wildlife outside. Tread carefully with nightkin.",
+      funfacts:["Marcus appeared in Fallout 2 and Fallout: New Vegas, a rare recurring character.","Lily's quest about her medication explores memory and identity movingly."]
+    },
+    {
+      name:"REPCONN Test Site", faction:"Ghoul cult / nightkin", region:"South of Novac", danger:"Medium",
+      tags:["Rockets","Ghouls","Come Fly With Me"],
+      summary:"A pre-war rocket research facility now occupied by a ghoul cult dreaming of space flight and a band of hidden nightkin. Setting of 'Come Fly With Me.'",
+      backstory:"REPCONN developed rocket and energy tech before the war. Its test site was overrun, then settled by Jason Bright's ghoul pilgrims, who believe the rockets can carry them to a promised land beyond the stars.",
+      notable:[
+        {name:"Jason Bright", detail:"Glowing-one leader of the space-bound ghoul cult."},
+        {name:"Davison & Antler", detail:"Nightkin leader and the 'stealth boy' they revere."}
+      ],
+      loot:[
+        {item:"Rocket souvenirs & energy ammo", where:"Throughout the labs and basement."},
+        {item:"Q-35 Matter Modulator", where:"A unique energy weapon found in the facility."}
+      ],
+      quests:["Come Fly With Me"],
+      dangers:"Feral ghouls and invisible nightkin in the basement.",
+      funfacts:["The ghouls genuinely launch into space if you help them.","The Q-35 Matter Modulator is a sleeper-strong unique energy weapon hidden here."]
+    },
+    {
+      name:"Camp McCarran", faction:"NCR", region:"South of The Strip", danger:"Low",
+      tags:["NCR HQ","Airport","Quests"],
+      summary:"The NCR's main military headquarters in the Mojave, built in the old McCarran airport. A quest hub for NCR storylines, including rooting out a Fiend-linked traitor.",
+      backstory:"The NCR seized the pre-war airport as its central command for the Mojave campaign, coordinating defense of Hoover Dam and operations against the Fiends and Legion from here.",
+      notable:[
+        {name:"Colonel Hsu / General Oliver's staff", detail:"NCR command contacts."},
+        {name:"Sgt. Bitter-Root, Lt. Boyd", detail:"Quest givers for monorail and counter-intel missions."}
+      ],
+      loot:[
+        {item:"NCR supplies & ammo", where:"Quartermaster and barracks."},
+        {item:"Mantis / sniper nest gear nearby", where:"Surrounding the perimeter."}
+      ],
+      quests:["Three-Card Bounty","Pheeble Will","I Put a Spell on You","Return to Sender"],
+      dangers:"Generally secure; combat only if you turn hostile to the NCR.",
+      funfacts:["The monorail here links straight to the Strip — and is a target in one NCR quest.","'I Put a Spell on You' is a tense counter-espionage mission to unmask a mole."]
+    }
+  ],
+
+  weapon: [
+    {name:"Anti-Materiel Rifle", class:"Sniper rifle", ammo:".50 MG", damage:"Massive (per-shot)", value:"~5500 caps",
+     tags:["Sniper",".50 MG","Top Tier"],
+     summary:"The premier long-range weapon — a bolt-action .50 cal that flattens almost anything in one or two hits, including Deathclaws and robots (with AP rounds).",
+     howtoget:[{step:"Buy from the Gun Runners kiosk or vendors",detail:"Reliable late-game purchase."},{step:"Loot from snipers",detail:"Found on certain high-level NPCs in the wasteland."}],
+     stats:[{stat:"Damage",value:"Very High"},{stat:"Crit",value:"Strong"},{stat:"Range",value:"Excellent"}],
+     comparison:"Best pure sniper in the base game. With AP or incendiary .50 rounds it trivializes the toughest enemies. Heavy and ammo is pricey.",
+     mods:"Carbon-fiber parts, suppressor available.",
+     funfacts:["AP .50 rounds let it punch through power armor and robots.","A single sneak-crit can one-shot most named NPCs."]},
+    {name:"This Machine", class:"Battle rifle", ammo:".308", damage:"High", value:"~3000 caps",
+     tags:["Rifle",".308","Unique"],
+     summary:"A WWII-style M1 Garand-pattern .308 battle rifle with excellent accuracy, iconic 'ping' on reload, and strong all-around damage.",
+     howtoget:[{step:"Complete NCR content at Camp Golf",detail:"Reward associated with Chief Hanlon's questline / Boot Riders area."}],
+     stats:[{stat:"Damage",value:"High"},{stat:"Accuracy",value:"Excellent"},{stat:"Fire Rate",value:"Good"}],
+     comparison:"One of the best mid-to-late game guns — accurate, hard-hitting, ignores some DT. A favorite for Guns builds.",
+     mods:"None (unique).",
+     funfacts:["Modeled on the M1 Garand, complete with the famous clip 'ping.'","Its non-unique sibling is the Battle Rifle."]},
+    {name:"Ranger Sequoia", class:"Revolver", ammo:".45-70 Gov't", damage:"Very High", value:"~3250 caps",
+     tags:["Revolver","Unique","Iconic"],
+     summary:"The signature heavy revolver of NCR Veteran Rangers — a hand-cannon that hits like a rifle, engraved with 'Bring back more brass.'",
+     howtoget:[{step:"Loot from NCR Veteran Rangers",detail:"Drops from the elite black-armored Rangers (endgame or via reputation conflicts)."}],
+     stats:[{stat:"Damage",value:"Very High"},{stat:"Crit",value:"High"},{stat:"Ammo",value:".45-70 (rare-ish)"}],
+     comparison:"One of the strongest sidearms in the game; massive per-shot damage. Pairs beautifully with the Ranger combat armor for the iconic look.",
+     mods:"None (unique).",
+     funfacts:["The engraving 'Bring back more brass' references conserving ammunition.","Killing Rangers tanks your NCR reputation, so most players acquire it carefully."]},
+    {name:"A Light Shining in Darkness", class:"Pistol", ammo:".45 Auto", damage:"High (rapid)", value:"~3000 caps",
+     tags:["Pistol",".45 Auto","DLC","Unique"],
+     summary:"Joshua Graham's personal .45 Auto pistol from Honest Hearts — superb accuracy, low spread, and a brutal fire rate. Arguably the best handgun in the game.",
+     howtoget:[{step:"Progress Honest Hearts DLC",detail:"Given by Joshua Graham as you work through Zion."}],
+     stats:[{stat:"Damage",value:"High"},{stat:"Accuracy",value:"Superb"},{stat:"Fire Rate",value:"Excellent"}],
+     comparison:"Outclasses most pistols thanks to tight spread and high DPS with .45 Auto. A staple of Guns builds after Honest Hearts.",
+     mods:"None (unique).",
+     funfacts:["Each round is engraved per Graham's meticulous habits.","Pairs with the .45 Auto pistol and SMG also introduced in the DLC."]},
+    {name:"Lucky", class:"Revolver", ammo:".357 Magnum", damage:"High crit", value:"~2500 caps",
+     tags:["Revolver",".357","Crit Build"],
+     summary:"A gleaming unique .357 revolver with a high critical chance multiplier — a crit-build favorite available very early.",
+     howtoget:[{step:"Bison Steve Hotel, Primm",detail:"In a locked floor safe (Lock 75) inside the casino/hotel."}],
+     stats:[{stat:"Damage",value:"High"},{stat:"Crit Chance",value:"x2.5"},{stat:"Availability",value:"Very early"}],
+     comparison:"With a Luck-heavy crit build, Lucky punches far above its level. One of the best early-game power spikes.",
+     mods:"None (unique).",
+     funfacts:["Its high crit multiplier makes it scale with Luck and crit perks.","One of the earliest 'broken-good' weapons you can grab."]},
+    {name:"Maria", class:"Pistol", ammo:"9mm", damage:"Moderate", value:"~2000 caps",
+     tags:["Pistol","9mm","Benny","Unique"],
+     summary:"Benny's ornate engraved 9mm pistol, decorated with imagery of Our Lady of Guadalupe. Looted after confronting him.",
+     howtoget:[{step:"Take it from Benny",detail:"During or after 'Ring-a-Ding-Ding!' — kill or subdue him."}],
+     stats:[{stat:"Damage",value:"Moderate"},{stat:"Crit",value:"Good"},{stat:"Style",value:"Maximum"}],
+     comparison:"A solid early sidearm with bonus crit, but mainly prized for its story significance and looks.",
+     mods:"Accepts 9mm pistol mods.",
+     funfacts:["'Maria' refers to the engraving of the Virgin of Guadalupe.","The gun that shot you in the intro — poetic to turn it on Benny."]},
+    {name:"Holorifle", class:"Energy weapon", ammo:"Microfusion cell", damage:"High (DoT)", value:"DLC reward",
+     tags:["Energy","DLC","Top Tier"],
+     summary:"The Dead Money DLC's signature energy weapon — a holographic-tech rifle that stacks damage and is fully upgradeable into one of the best energy guns in the game.",
+     howtoget:[{step:"Dead Money DLC",detail:"Acquired early in the DLC; upgrade with vending-machine-bought mods."}],
+     stats:[{stat:"Damage",value:"High"},{stat:"Upgrades",value:"4 mods available"},{stat:"Accuracy",value:"Excellent"}],
+     comparison:"Fully modded, it rivals or beats most energy weapons for single-target damage. A must-keep after Dead Money.",
+     mods:"Focus optics, scrap deflector, advanced calibrator, etc. (bought via Sierra Madre machines).",
+     funfacts:["Built from holographic projector tech unique to the Sierra Madre.","Its mods are funded by the same vending machine that breaks the late game economy."]}
+  ],
+
+  secret: [
+    {name:"Alien Blaster", class:"Energy pistol (Easter egg)", rarity:"One-of-a-kind", ammo:"Alien Power Cell", value:"Priceless",
+     tags:["Easter Egg","UFO","Energy"],
+     summary:"A literal alien sidearm with sky-high damage and crit — found at a crashed UFO easter egg in the far northwest of the map.",
+     secretof:"It only appears via a random encounter: a crashed flying saucer with dead aliens spawns at a specific spot in the extreme northwest (near Horowitz Farmstead). It isn't guaranteed and is easy to miss entirely.",
+     howtoget:[{step:"Travel to the far NW corner",detail:"Look near the Horowitz Farmstead / northwest map edge."},{step:"Find the crashed UFO encounter",detail:"Dead aliens surround the wreck; loot the Alien Blaster and limited Alien Power Cells from them."}],
+     stats:[{stat:"Damage",value:"Extremely High"},{stat:"Crit",value:"Huge"},{stat:"Ammo",value:"Very limited (no resupply)"}],
+     quirks:"Ammo is finite — you can't buy or craft Alien Power Cells, so it's a 'break glass in emergency' weapon.",
+     comparison:"Per-shot, it's one of the deadliest guns in the game — but the tiny ammo pool keeps it a novelty/panic button rather than a daily driver.",
+     funfacts:["A recurring Fallout easter egg dating back to Fallout 1 & 3.","The encounter spawn is semi-random, so two playthroughs may differ."]},
+    {name:"YCS/186", class:"Gauss rifle (unique)", rarity:"Unique", ammo:"Microfusion cell", value:"~7000 caps",
+     tags:["Energy","Gauss","Hidden"],
+     summary:"A unique Gauss rifle that fires a single devastating magnetically-accelerated slug — one of the hardest-hitting energy weapons in the game.",
+     secretof:"Tied to a hidden mercenary random-encounter camp northeast of Boulder City. To get the merc to spawn carrying it, you must NOT have ED-E as your companion and need decent Science — most players never trigger it.",
+     howtoget:[{step:"Drop/dismiss ED-E first",detail:"The encounter won't yield the rifle if ED-E is following you."},{step:"Go to the merc camp NE of Boulder City / near Brewer's Beer Bootlegging",detail:"A lone mercenary carries the YCS/186; defeat him to claim it."}],
+     stats:[{stat:"Damage",value:"Enormous (per shot)"},{stat:"Crit",value:"Very high"},{stat:"Fire Rate",value:"Slow"}],
+     quirks:"Single-shot, ammo-hungry — every trigger pull burns multiple microfusion cells but deletes most targets.",
+     comparison:"A premier sniper-style energy weapon; arguably the strongest single-shot gun if you can feed it ammo.",
+     funfacts:["The 'no ED-E' requirement is one of the more obscure acquisition conditions in the game.","Its name reads like a serial number — fitting for prototype tech."]},
+    {name:"Euclid's C-Finder", class:"Orbital strike designator", rarity:"Easter Egg", ammo:"N/A (charges)", value:"Toy price",
+     tags:["Easter Egg","ARCHIMEDES","Orbital Laser"],
+     summary:"A 'toy' a kid in Freeside uses to call down ARCHIMEDES II — an orbital laser from the HELIOS One solar array. It literally fires a death beam from space.",
+     secretof:"You must configure HELIOS One for ARCHIMEDES during 'That Lucky Old Sun,' then buy/take the C-Finder from a child (Max) near the King's School. Set the plant wrong and the weapon never works.",
+     howtoget:[{step:"Do 'That Lucky Old Sun' and route power to ARCHIMEDES",detail:"Requires the right Science configuration at HELIOS One."},{step:"Get the C-Finder from the kid in Freeside",detail:"Buy it, pickpocket it, or other means near the King's School playground."}],
+     stats:[{stat:"Damage",value:"Orbital (devastating)"},{stat:"Recharge",value:"Slow (5 min real-time)"},{stat:"Range",value:"Line of sight"}],
+     quirks:"Fires a satellite laser with a long cooldown; useless until HELIOS is set to ARCHIMEDES mode.",
+     comparison:"Pure spectacle — incredible for clearing groups, but the long recharge makes it situational fun rather than a main weapon.",
+     funfacts:["ARCHIMEDES references the ancient story of focusing sunlight as a weapon.","A child wielding an orbital death ray is peak Fallout dark comedy."]},
+    {name:"Mercy", class:"Grenade machine gun (unique)", rarity:"Unique", ammo:"40mm grenade", value:"~8000 caps",
+     tags:["Explosive","Unique","Hidden"],
+     summary:"A unique fully-automatic grenade launcher that hurls a stream of 40mm grenades — devastating crowd control, hidden in one of the deadliest caves in the game.",
+     secretof:"Buried deep in Dead Wind Cavern, guarded by a pack of Deathclaws including the legendary Deathclaw. Reaching the ammo crate that holds Mercy is a serious endgame gauntlet.",
+     howtoget:[{step:"Travel to Dead Wind Cavern",detail:"Far southeast; extremely dangerous."},{step:"Fight (or sneak) past the Deathclaws",detail:"Mercy sits in an ammo box near the back of the cave."}],
+     stats:[{stat:"Damage",value:"High (explosive AoE)"},{stat:"Fire Rate",value:"Automatic"},{stat:"Effect",value:"Grenades that can knock down"}],
+     quirks:"Its grenades cause extra limb/knockdown effects — great for staggering tough enemies.",
+     comparison:"Best-in-class for Explosives builds; clears groups instantly. The catch is surviving the Deathclaw den to get it.",
+     funfacts:["Dead Wind Cavern's Legendary Deathclaw is among the toughest enemies in the base game.","'Mercy' is darkly ironic for a rapid-fire grenade gun."]},
+    {name:"Annabelle", class:"Missile launcher (unique)", rarity:"Unique", ammo:"Missile", value:"~4000 caps",
+     tags:["Explosive","Unique","Nightkin"],
+     summary:"A unique missile launcher with a faster fire rate, carried by a heartbroken nightkin named Keene/Davison's group — wrapped in a small tragic story.",
+     secretof:"Carried by the nightkin Davison (or a related nightkin) — you typically have to deal with the REPCONN/nightkin situation to claim it, and many players just blow past it.",
+     howtoget:[{step:"Encounter the nightkin (REPCONN basement / related)",detail:"Defeat or resolve the nightkin holding it."},{step:"Loot Annabelle",detail:"Take the launcher from the body."}],
+     stats:[{stat:"Damage",value:"High (explosive)"},{stat:"Fire Rate",value:"Faster than standard"},{stat:"Blast",value:"Large AoE"}],
+     quirks:"Higher rate of fire than a normal missile launcher, making it stronger for sustained explosive damage.",
+     comparison:"A solid step up from the base missile launcher for Explosives fans, with a melancholy backstory attached.",
+     funfacts:["The nightkin's attachment to 'Annabelle' adds a sad note to claiming it.","Pairs well with the Demolition Expert perk line."]},
+    {name:"Pew Pew", class:"Laser pistol (unique)", rarity:"Unique", ammo:"Energy cell", value:"~3000 caps",
+     tags:["Energy","Unique","Vault 11"],
+     summary:"A goofily-named but brutal unique laser pistol with a huge critical multiplier, hidden in the chilling Vault 11.",
+     secretof:"Tucked away in Vault 11 — a vault most players visit for the story, not realizing one of the best crit energy weapons is stashed inside.",
+     howtoget:[{step:"Explore Vault 11",detail:"Far southwest of the map."},{step:"Find Pew Pew in the vault depths",detail:"Recover it while uncovering the vault's dark experiment."}],
+     stats:[{stat:"Damage",value:"High"},{stat:"Crit",value:"Massive multiplier"},{stat:"Ammo per shot",value:"High drain"}],
+     quirks:"Burns extra energy cells per shot but rewards crit builds with enormous burst damage.",
+     comparison:"For a Luck/crit energy build, Pew Pew is a hidden powerhouse despite the silly name.",
+     funfacts:["Found alongside Vault 11's acclaimed environmental storytelling.","The name is a community favorite for its bluntness."]},
+    {name:"Chance's Knife", class:"Throwing/melee knife (unique)", rarity:"Unique", ammo:"N/A", value:"~1000 caps",
+     tags:["Melee","Early Game","Hidden Grave"],
+     summary:"A strong early unique knife with high crit, hidden at a lonely grave just south of Goodsprings.",
+     secretof:"The grave is marked with a knife stuck in the dirt, but the weapon is actually inside the grave's container ('pile of rocks') — many players walk past it without realizing it's lootable.",
+     howtoget:[{step:"Head south from Goodsprings",detail:"Find the isolated grave marked by a planted knife."},{step:"Loot the grave container",detail:"Chance's Knife is inside, not the visible marker."}],
+     stats:[{stat:"Damage",value:"High for early game"},{stat:"Crit",value:"High"},{stat:"Speed",value:"Fast"}],
+     quirks:"Punches above its level — a great melee/throwing option from the very start.",
+     comparison:"One of the best early melee weapons; trivializes the opening hours for a melee build.",
+     funfacts:["'Chance' references a Fallout 1 character connection.","The grave is a small piece of environmental storytelling about a fallen prospector."]},
+    {name:"Fido (K9000 Cyberdog Gun)", class:"Cyberdog gun (unique)", rarity:"Unique", ammo:"5.56mm", value:"~3500 caps",
+     tags:["Old World Blues","DLC","Weird"],
+     summary:"A unique K9000 — a gun built around a living cyberdog brain that growls and barks as it fires. Found in the Old World Blues DLC.",
+     secretof:"Fido is a special version of the K9000 you assemble/find in Old World Blues; getting the unique requires exploring the Big MT's labs and finding the right brain.",
+     howtoget:[{step:"Play Old World Blues DLC",detail:"Explore the Big MT research facilities."},{step:"Acquire the cyberdog brain components",detail:"Fido is the upgraded unique form of the K9000."}],
+     stats:[{stat:"Damage",value:"Good (automatic)"},{stat:"Fire Rate",value:"High"},{stat:"Personality",value:"Barks!"}],
+     quirks:"It literally contains a dog brain and vocalizes during use — pure Fallout absurdity.",
+     comparison:"A fun and viable automatic 5.56 weapon, elevated by its sheer novelty.",
+     funfacts:["Old World Blues is the most comedic, sci-fi DLC — Fido fits perfectly.","The base K9000 is craftable; Fido is the special variant."]},
+    {name:"Big Boomer", class:"Sawed-off shotgun (unique)", rarity:"Unique", ammo:"12 gauge", value:"~1200 caps",
+     tags:["Shotgun","Unique","Early"],
+     summary:"A unique double-barrel sawed-off shotgun that delivers a punishing point-blank blast, owned by an old woman at the Gibson Scrap Yard.",
+     secretof:"It's carried by Old Lady Gibson at the scrapyard near Novac — you either buy it, pickpocket it, or take it, and many players never think to check her inventory.",
+     howtoget:[{step:"Visit Gibson Scrap Yard",detail:"Near Novac."},{step:"Acquire from Old Lady Gibson",detail:"Trade, pickpocket, or otherwise obtain Big Boomer."}],
+     stats:[{stat:"Damage",value:"Huge (close range)"},{stat:"Spread",value:"Wide"},{stat:"Capacity",value:"2 shells"}],
+     quirks:"Devastating up close but only two shots before reload — a glass-cannon scattergun.",
+     comparison:"One of the best early shotguns for in-your-face fights; falls off at range.",
+     funfacts:["Pairs perfectly with shotgun perks like 'And Stay Back.'","Old Lady Gibson is a memorable minor NPC at the scrapyard."]}
+  ]
+};
+
+/* ============================================================
+   FALLOUT TIMELINE — detailed, grouped by era
+   ============================================================ */
+const TIMELINE = [
+  {era:"Pre-War World", range:"Before 2077", events:[
+    {year:"2042", desc:"<b>Resource Wars</b> begin as oil and uranium run dry. The UN collapses; the Middle East and Europe descend into conflict over the last reserves."},
+    {year:"2052", desc:"The <b>Euro-Middle Eastern War</b> erupts. The Plague spreads in the US, prompting fear and border closures. Vault-Tec is contracted to build fallout shelters."},
+    {year:"2053", desc:"Tel Aviv is destroyed by a terrorist nuke — the first nuclear detonation of the era. Nuclear weapons re-enter active use."},
+    {year:"2059", desc:"The US establishes the <b>Anchorage Front Line</b> as tensions with China escalate over Alaskan oil."},
+    {year:"2066", desc:"<b>China invades Alaska.</b> The Sino-American War begins. The US accelerates power-armor and FEV research."},
+    {year:"2072", desc:"The US deploys early <b>power armor</b> prototypes. Robco, West-Tek, and Vault-Tec push experimental tech."},
+    {year:"2076", desc:"The <b>T-51b power armor</b> is perfected and deployed. The US annexes Canada to secure resources."},
+    {year:"Jan 2077", desc:"US forces <b>reclaim Anchorage</b> from China, ending the land campaign. Tensions remain at a knife's edge."}
+  ]},
+  {era:"The Great War", range:"Oct 23, 2077", events:[
+    {year:"2077", desc:"<b>The Great War.</b> On October 23, the world ends in roughly two hours of total nuclear exchange. Exactly who fired first is unknown. Billions die."},
+    {year:"2077", desc:"<b>Mr. House</b> activates Las Vegas's missile-defense grid, intercepting 59 of 77 warheads aimed at the city and shielding the future Strip. He seals himself in stasis."},
+    {year:"2077", desc:"Vault doors seal across America. The <b>Vault Experiments</b> — most never about survival, but social engineering — begin in secret."}
+  ]},
+  {era:"Early Wasteland", range:"2077 – 2161", events:[
+    {year:"2102", desc:"Vault 8 opens on schedule and founds <b>Vault City</b>, a rare success story, using its GECK to terraform the land."},
+    {year:"2155", desc:"The <b>Master</b> (Richard Grey) begins experimenting with the <b>Forced Evolutionary Virus (FEV)</b>, creating the first super mutants."},
+    {year:"2161", desc:"<b>Fallout 1:</b> The Vault Dweller leaves Vault 13 to find a replacement water chip, ultimately destroying the Master and his mutant army."}
+  ]},
+  {era:"Rise of Nations", range:"2162 – 2241", events:[
+    {year:"2189", desc:"The <b>New California Republic (NCR)</b> is formally founded around Shady Sands, championing democracy, law, and expansion."},
+    {year:"2196", desc:"The NCR rapidly expands across former California, absorbing towns and trade routes."},
+    {year:"2241", desc:"<b>Fallout 2:</b> The Chosen One (descendant of the Vault Dweller) saves Arroyo and destroys the remnant Enclave oil rig."}
+  ]},
+  {era:"Caesar & the Mojave Approach", range:"2246 – 2274", events:[
+    {year:"2246", desc:"<b>Edward Sallow</b>, a Follower of the Apocalypse, accompanies an expedition into Arizona. After his mentor dies, he conquers the Blackfoot tribe."},
+    {year:"2247", desc:"Sallow renames himself <b>Caesar</b> and begins forging conquered tribes into the <b>Legion</b>, modeled on ancient Rome."},
+    {year:"2274", desc:"The Legion has absorbed <b>86+ tribes</b>, becoming a massive disciplined slave army east of the Colorado River."}
+  ]},
+  {era:"Battle for the Dam", range:"2274 – 2277", events:[
+    {year:"2274", desc:"The <b>NCR reaches the Mojave</b> and seizes Hoover Dam, restoring power and water — and setting up a clash with the Legion."},
+    {year:"2277", desc:"<b>First Battle of Hoover Dam.</b> The NCR repels the Legion. Joshua Graham, Caesar's Legate, is blamed for the defeat — set on fire and cast into the Grand Canyon."},
+    {year:"2277", desc:"<b>Mr. House</b> awakens fully and begins rebuilding the New Vegas Strip, taming the Three Families with his securitrons."}
+  ]},
+  {era:"Fallout: New Vegas", range:"2281", events:[
+    {year:"2281", desc:"<b>The Courier</b> is ambushed near Goodsprings by Benny, shot in the head, and left for dead while carrying the Platinum Chip. Victor digs them out; Doc Mitchell revives them."},
+    {year:"2281", desc:"The Courier hunts Benny across the Mojave, recovering the <b>Platinum Chip</b> — a securitron upgrade everyone wants."},
+    {year:"2281", desc:"Four powers vie for the Mojave: the <b>NCR</b> (democracy & expansion), <b>Caesar's Legion</b> (brutal order), <b>Mr. House</b> (technocratic independence), and an <b>Independent</b> Vegas via Yes Man."},
+    {year:"2281", desc:"<b>Second Battle of Hoover Dam.</b> The Courier's choices decide the Mojave's fate — and which of the four endings comes to pass."}
+  ]},
+  {era:"After the Mojave (Other Titles)", range:"2287+", events:[
+    {year:"2287", desc:"<b>Fallout 4</b> (Commonwealth, far from the Mojave): the Sole Survivor emerges from Vault 111 into post-war Boston. Separate region and storyline."},
+    {year:"2296", desc:"<b>Fallout 76</b> is set earlier (2102) in Appalachia; the broader franchise timeline continues to expand across regions and eras."}
+  ]}
+];
+
+/* ============================================================
+   RENDERING
+   ============================================================ */
+const MODES = [
+  {key:"character", label:"CHARACTERS", icon:"☣"},
+  {key:"quest",     label:"QUESTS",     icon:"✦"},
+  {key:"location",  label:"LOCATIONS",  icon:"◈"},
+  {key:"weapon",    label:"WEAPONS",    icon:"⚔"},
+  {key:"secret",    label:"SECRETS",    icon:"★"},
+  {key:"timeline",  label:"TIMELINE",   icon:"⏱"}
+];
+
+let state = {mode:"character", selected:null};
+
+const nav = document.getElementById("nav");
+const content = document.getElementById("content");
+
+function esc(s){return (s==null?"":String(s));}
+
+function renderNav(){
+  nav.innerHTML = "";
+  MODES.forEach(m=>{
+    const b=document.createElement("button");
+    b.className="tab"+(state.mode===m.key?" active":"");
+    b.innerHTML=`<span>${m.icon}</span>${m.label}`;
+    b.onclick=()=>{state.mode=m.key;state.selected=null;render();window.scrollTo(0,0);};
+    nav.appendChild(b);
+  });
+}
+
+function chip(label){return label?`<span>${label}</span>`:"";}
+
+function renderList(){
+  const items = DATA[state.mode] || [];
+  const subKey = {character:"faction",quest:"status",location:"region",weapon:"class",secret:"rarity"}[state.mode];
+  let html = `<div class="intro">Browse the ${state.mode} archive below. Tap any entry for the full dossier.<br><span style="color:var(--line)">${items.length} entries on file.</span></div>`;
+  html += `<div class="grid" style="margin-top:14px">`;
+  items.forEach((it,i)=>{
+    html += `<button class="card" onclick="openEntry(${i})">
+      <div class="card-name">${esc(it.name).toUpperCase()}</div>
+      <div class="card-sub">${esc(it[subKey]||"")}</div>
+    </button>`;
+  });
+  html += `</div>`;
+  content.innerHTML = html;
+}
+
+function section(title, body){
+  if(!body) return "";
+  return `<div class="sec-title">&gt;&gt; ${title}</div>${body}`;
+}
+
+function renderEntry(it){
+  const dangerC = (d)=>{d=(d||"").toLowerCase();return d.includes("extreme")?"#ff5a3a":d.includes("high")?"#ff8a3a":"var(--text)";};
+  let chips = "";
+  [["⚑",it.faction],["◈",it.location||it.region],["●",it.status],["☻",it.questgiver],
+   ["⚔",it.class],["◉",it.ammo],["⊗",it.race],["★",it.rarity]].forEach(([ic,v])=>{
+    if(v) chips += `<span>${ic} ${esc(v)}</span>`;
+  });
+  if(it.danger) chips += `<span style="color:${dangerC(it.danger)}">⚠ ${esc(it.danger)}</span>`;
+
+  let tags = (it.tags||[]).map(t=>`<span class="tag">${esc(t).toUpperCase()}</span>`).join("");
+
+  let body = "";
+  if(it.summary) body += `<p class="para">${esc(it.summary)}</p>`;
+
+  if(it.secretof) body += section("WHY IT'S A SECRET", `<div style="border-left:2px solid var(--amber-bright);padding:10px 12px;background:rgba(255,182,66,0.05)"><p class="para">${esc(it.secretof)}</p></div>`);
+  if(it.backstory) body += section("BACKSTORY", `<p class="para">${esc(it.backstory)}</p>`);
+
+  if(it.dialogue) body += section("DIALOGUE & CONVERSATIONS", it.dialogue.map(d=>{
+    const opts = (d.options||[]).map(o=>`<div class="dlg-opt"><div class="dlg-line">"${esc(o.line)}"</div><div class="dlg-res">↳ ${esc(o.result)}</div></div>`).join("");
+    return `<div style="margin-bottom:14px"><div class="dlg-topic">▸ ${esc(d.topic)}</div>${opts}</div>`;
+  }).join(""));
+
+  if(it.walkthrough) body += section("WALKTHROUGH", it.walkthrough.map((s,i)=>
+    `<div class="step"><div class="step-num">${i+1}</div><div><div class="step-title">${esc(s.step)}</div><div class="step-detail">${esc(s.detail)}</div></div></div>`
+  ).join(""));
+
+  if(it.howtoget) body += section("HOW TO ACQUIRE", it.howtoget.map((s,i)=>
+    `<div class="step"><div class="step-num">${i+1}</div><div><div class="step-title">${esc(s.step)}</div>${s.detail?`<div class="step-detail">${esc(s.detail)}</div>`:""}</div></div>`
+  ).join(""));
+
+  if(it.choices) body += section("KEY CHOICES & CONSEQUENCES", it.choices.map(c=>
+    `<div class="choice"><div class="choice-q">⮞ ${esc(c.choice)}</div><div class="choice-o">${esc(c.outcomes)}</div></div>`
+  ).join(""));
+
+  if(it.skillchecks && it.skillchecks.length) body += section("SKILL CHECKS", it.skillchecks.map(s=>
+    `<div style="display:flex;gap:10px;font-size:11px;margin-bottom:6px"><span style="color:var(--amber);font-weight:bold;min-width:110px">${esc(s.check)}</span><span style="color:var(--text);line-height:1.5">${esc(s.reward)}</span></div>`
+  ).join(""));
+
+  if(it.stats) body += section("STATS", `<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">`+
+    it.stats.map(s=>`<div style="border:1px solid var(--line);padding:8px 10px;background:var(--bg-dark)"><div style="font-size:9px;color:var(--amber-dim);letter-spacing:1px">${esc(s.stat).toUpperCase()}</div><div style="font-size:14px;color:var(--amber-bright);font-weight:bold">${esc(s.value)}</div></div>`).join("")
+    +`</div>`);
+
+  if(it.quirks) body += section("QUIRKS & SPECIAL EFFECTS", `<p class="para">${esc(it.quirks)}</p>`);
+  if(it.combat) body += section("COMBAT", `<p class="para">${esc(it.combat)}</p>`);
+  if(it.comparison) body += section("IS IT WORTH IT?", `<p class="para">${esc(it.comparison)}</p>`);
+  if(it.mods) body += section("WEAPON MODS", `<p class="para">${esc(it.mods)}</p>`);
+  if(it.rewards) body += section("REWARDS", `<p class="para">${esc(it.rewards)}</p>`);
+  if(it.dangers) body += section("DANGERS", `<p class="para">${esc(it.dangers)}</p>`);
+
+  if(it.notable) body += section("NOTABLE NPCS & FEATURES", it.notable.map(n=>
+    `<div class="list-item"><b>◆ ${esc(n.name)}</b> — ${esc(n.detail)}</div>`).join(""));
+  if(it.loot) body += section("LOOT & ITEMS", it.loot.map(l=>
+    `<div class="list-item"><b>✦ ${esc(l.item)}</b> — ${esc(l.where)}</div>`).join(""));
+
+  if(it.quests && it.quests.length) body += section("RELATED QUESTS", it.quests.map(q=>
+    typeof q==="string"?`<div class="list-item">✦ ${esc(q)}</div>`:`<div class="list-item">✦ <b>${esc(q.name)}</b> — ${esc(q.role)}</div>`
+  ).join(""));
+
+  if(it.funfacts) body += section("FUN FACTS & TRIVIA", it.funfacts.map(f=>
+    `<div class="fact"><b>◆</b> ${esc(f)}</div>`).join(""));
+
+  content.innerHTML = `
+    <button class="back-btn" onclick="backToList()">‹ BACK TO ${state.mode.toUpperCase()} LIST</button>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="dossier-tag">&gt; DOSSIER // ${esc(it.type||state.mode).toUpperCase()}</div>
+        <div class="entry-name">${esc(it.name).toUpperCase()}</div>
+        <div class="chips">${chips}</div>
+        ${tags?`<div class="tags">${tags}</div>`:""}
+      </div>
+      <div class="panel-body">${body}</div>
+    </div>`;
+}
+
+function renderTimeline(){
+  let html = `<div class="intro">A condensed history of the Fallout world, from the Resource Wars to the Mojave and beyond. Tap an era to expand.<br><span style="color:var(--line)">Dates use the in-universe Fallout calendar.</span></div><div style="margin-top:16px">`;
+  TIMELINE.forEach((era,ei)=>{
+    const evs = era.events.map(e=>`<div class="tl-event"><div class="tl-year">${esc(e.year)}</div><div class="tl-desc">${e.desc}</div></div>`).join("");
+    html += `<div class="tl-era${ei<=6?" open":""}" id="era-${ei}">
+      <div class="tl-era-head" onclick="document.getElementById('era-${ei}').classList.toggle('open')">
+        <span class="tl-era-title">${esc(era.era)}</span>
+        <span class="tl-era-range">${esc(era.range)} ▾</span>
+      </div>
+      <div class="tl-events">${evs}</div>
+    </div>`;
+  });
+  html += `</div>`;
+  content.innerHTML = html;
+}
+
+window.openEntry = function(i){ state.selected=i; renderEntry(DATA[state.mode][i]); window.scrollTo(0,0); };
+window.backToList = function(){ state.selected=null; render(); window.scrollTo(0,0); };
+
+function render(){
+  renderNav();
+  if(state.mode==="timeline"){ renderTimeline(); return; }
+  if(state.selected!=null){ renderEntry(DATA[state.mode][state.selected]); return; }
+  renderList();
+}
+
+render();
+</script>
+</body>
+</html>
